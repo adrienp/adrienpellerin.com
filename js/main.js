@@ -4,11 +4,10 @@
 
   require.config({
     paths: {
-      jquery: "lib/jquery-1.9.1",
-      goog: "/_ah/channel/jsapi?",
-      backbone: "lib/backbone",
-      underscore: "lib/underscore",
-      kinetic: "lib/kinetic-v4.3.3"
+      kinetic: "http://cdnjs.cloudflare.com/ajax/libs/kineticjs/4.3.1/kinetic.min",
+      underscore: "http://cdnjs.cloudflare.com/ajax/libs/underscore.js/1.4.4/underscore-min",
+      backbone: "http://cdnjs.cloudflare.com/ajax/libs/backbone.js/0.9.10/backbone-min.js",
+      jquery: "http://ajax.googleapis.com/ajax/libs/jquery/1.9.1/jquery.min"
     },
     shim: {
       goog: {
@@ -32,8 +31,8 @@
         this.y = y;
         this.height = height;
         this.boxes = boxes;
-        this.shape = new Kinetic.Rect({
-          fill: '#888'
+        this.shape = new Kinetic.Circle({
+          fill: 'white'
         });
         layer.add(this.shape);
         this.speed = 0.2;
@@ -41,14 +40,14 @@
       }
 
       Box.prototype.reposition = function(width, height) {
-        var boxHeight, boxWidth, numX, numY;
+        var boxHeight, boxWidth, numX, numY, radius;
         numX = this.boxes.length;
         numY = this.boxes[0].length;
         boxWidth = width / numX;
         boxHeight = height / numY;
+        radius = (boxWidth + boxHeight) / 4;
         this.shape.setPosition(boxWidth * (this.x + 0.5), boxHeight * (this.y + 0.5));
-        this.shape.setSize(boxWidth, boxHeight);
-        return this.shape.setOffset(boxWidth / 2, boxHeight / 2);
+        return this.shape.setRadius(radius);
       };
 
       Box.prototype.go = function(dt, heights) {
@@ -85,10 +84,10 @@
       };
 
       Box.prototype.draw = function() {
-        var color, t;
-        this.shape.setZIndex(Math.floor(this.height * 135));
-        color = Math.round(this.height * 255);
-        this.shape.setFill("rgb(" + color + ", " + color + ", " + color + ")");
+        var numBoxes, t;
+        numBoxes = this.boxes.length === 0 ? 0 : this.boxes.length * this.boxes[0].length;
+        this.shape.setZIndex(Math.floor(this.height * numBoxes));
+        this.shape.setOpacity(this.height);
         this.shape.setScale(this.height * 1.5 + 0.5);
         this.shape.setShadowOpacity(Math.max((this.height * 2) - 1, 0.001));
         return t = Math.max((this.height * 2) - 1, 0);
@@ -112,8 +111,8 @@
           height: this.height
         });
         this.boxLayer = new Kinetic.Layer();
-        this.numX = 15;
-        this.numY = 9;
+        this.numX = Math.ceil(this.width / 100);
+        this.numY = Math.ceil(this.height / 100);
         this.coords = [];
         this.boxes = [];
         for (x = _i = 0, _ref = this.numX; 0 <= _ref ? _i < _ref : _i > _ref; x = 0 <= _ref ? ++_i : --_i) {
@@ -163,13 +162,16 @@
           return _this.hover([]);
         });
         $(window).on("touchstart touchmove touchend", function(e) {
-          var coords, touch, _k, _len;
+          var coords, touch, _k, _len, _ref2;
           coords = [];
-          for (_k = 0, _len = touches.length; _k < _len; _k++) {
-            touch = touches[_k];
+          _ref2 = e.originalEvent.touches;
+          for (_k = 0, _len = _ref2.length; _k < _len; _k++) {
+            touch = _ref2[_k];
             x = Math.floor(_this.numX * touch.clientX / _this.width);
             y = Math.floor(_this.numY * touch.clientY / _this.height);
-            coords.push([x, y]);
+            if (x >= 0 && y >= 0) {
+              coords.push([x, y]);
+            }
           }
           _this.hover(coords);
           return e.preventDefault();

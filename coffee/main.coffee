@@ -1,11 +1,16 @@
 require.config
     # baseUrl: "js/"
     paths:
-        jquery: "lib/jquery-1.9.1"
-        goog: "/_ah/channel/jsapi?"
-        backbone: "lib/backbone"
-        underscore: "lib/underscore"
-        kinetic: "lib/kinetic-v4.3.3"
+        # jquery: "lib/jquery-1.9.1"
+        # goog: "/_ah/channel/jsapi?"
+        # backbone: "lib/backbone"
+        # underscore: "lib/underscore"
+        # kinetic: "lib/kinetic-v4.3.3"
+
+        kinetic: "http://cdnjs.cloudflare.com/ajax/libs/kineticjs/4.3.1/kinetic.min"
+        underscore: "http://cdnjs.cloudflare.com/ajax/libs/underscore.js/1.4.4/underscore-min"
+        backbone: "http://cdnjs.cloudflare.com/ajax/libs/backbone.js/0.9.10/backbone-min.js"
+        jquery: "http://ajax.googleapis.com/ajax/libs/jquery/1.9.1/jquery.min"
 
     shim:
         goog:
@@ -18,8 +23,8 @@ require.config
 require ["kinetic", "jquery", "underscore"], (Kinetic, $, _) ->
     class Box
         constructor: (@x, @y, @height, @boxes, layer) ->
-            @shape = new Kinetic.Rect
-                fill: '#888'
+            @shape = new Kinetic.Circle
+                fill: 'white'
                 # shadowColor: '#000'
                 # shadowBlur: 30
 
@@ -51,10 +56,12 @@ require ["kinetic", "jquery", "underscore"], (Kinetic, $, _) ->
 
             boxWidth = width / numX
             boxHeight = height / numY
+            radius = (boxWidth + boxHeight) / 4
 
             @shape.setPosition boxWidth * (@x + 0.5), boxHeight * (@y + 0.5)
-            @shape.setSize boxWidth, boxHeight
-            @shape.setOffset boxWidth / 2, boxHeight / 2
+            # @shape.setSize boxWidth, boxHeight
+            @shape.setRadius radius
+            # @shape.setOffset boxWidth / 2, boxHeight / 2
 
             # @text.setPosition boxWidth * (@x + 0.5), boxHeight * (@y + 0.5)
             # @text.setZIndex 10000
@@ -91,15 +98,17 @@ require ["kinetic", "jquery", "underscore"], (Kinetic, $, _) ->
             @hold = false
 
         draw: ->
-            @shape.setZIndex Math.floor(@height * 135)
+            numBoxes = if @boxes.length == 0 then 0 else @boxes.length * @boxes[0].length
+            @shape.setZIndex Math.floor(@height * numBoxes)
 
             # if Math.floor(@height * 255) == 254
             #     console.log @shape.getZIndex(), @shape.getAbsoluteZIndex()
             #     console.log Math.floor(@height * 255), Math.floor(@boxes[@x+1][@y].height * 255), @
 
-            color = Math.round @height * 255
+            # color = Math.round @height * 255
 
-            @shape.setFill "rgb(#{color}, #{color}, #{color})"
+            # @shape.setFill "rgb(#{color}, #{color}, #{color})"
+            @shape.setOpacity @height
 
             @shape.setScale @height*1.5 + 0.5
             @shape.setShadowOpacity Math.max((@height * 2) - 1, 0.001)
@@ -121,8 +130,8 @@ require ["kinetic", "jquery", "underscore"], (Kinetic, $, _) ->
 
             @boxLayer = new Kinetic.Layer()
 
-            @numX = 15
-            @numY = 9
+            @numX = Math.ceil(@width / 100)
+            @numY = Math.ceil(@height / 100)
 
             @coords = []
 
@@ -163,11 +172,11 @@ require ["kinetic", "jquery", "underscore"], (Kinetic, $, _) ->
             $(window).on "touchstart touchmove touchend", (e) =>
                 coords = []
 
-                for touch in touches
+                for touch in e.originalEvent.touches
                     x = Math.floor(@numX * touch.clientX / @width)
                     y = Math.floor(@numY * touch.clientY / @height)
 
-                    coords.push [x, y]
+                    coords.push [x, y] if x >= 0 and y >= 0
 
                 @hover coords
 
