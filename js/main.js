@@ -101,6 +101,8 @@
       function Boxes() {
         this.reposition = __bind(this.reposition, this);
 
+        this.auto = __bind(this.auto, this);
+
         var box, col, x, y, _i, _j, _ref, _ref1,
           _this = this;
         this.width = $(window).width();
@@ -128,7 +130,20 @@
         this.reposition();
         $(window).on("resize", this.reposition);
         this.anim = new Kinetic.Animation((function(frame) {
-          var coord, heights, _k, _len, _ref2, _results;
+          var coord, heights, touchX, touchY, _k, _len, _ref2, _results;
+          if (_this.autoMove) {
+            _this.autoMove.progress += frame.timeDiff / _this.autoMove.duration;
+            if (_this.autoMove.progress >= 1) {
+              _this.hover([]);
+              _this.autoMove = null;
+            } else {
+              touchX = _this.autoMove.end.x * _this.autoMove.progress + _this.autoMove.start.x * (1 - _this.autoMove.progress);
+              touchY = _this.autoMove.end.y * _this.autoMove.progress + _this.autoMove.start.y * (1 - _this.autoMove.progress);
+              x = Math.floor(_this.numX * touchX / _this.width);
+              y = Math.floor(_this.numY * touchY / _this.height);
+              _this.hover([[x, y]]);
+            }
+          }
           heights = (function() {
             var _k, _ref2, _results;
             _results = [];
@@ -154,6 +169,7 @@
         }), this.boxLayer);
         this.curHover = [];
         $(window).on("mousemove mouseover", function(e) {
+          _this.autoMove = null;
           x = Math.floor(_this.numX * e.clientX / _this.width);
           y = Math.floor(_this.numY * e.clientY / _this.height);
           return _this.hover([[x, y]]);
@@ -164,6 +180,7 @@
         $(window).on("touchstart touchmove touchend", function(e) {
           var coords, touch, _k, _len, _ref2;
           coords = [];
+          _this.autoMove = null;
           _ref2 = e.originalEvent.touches;
           for (_k = 0, _len = _ref2.length; _k < _len; _k++) {
             touch = _ref2[_k];
@@ -177,19 +194,74 @@
           return e.preventDefault();
         });
         this.anim.start();
+        setTimeout(this.auto, 5000);
       }
 
+      Boxes.prototype.auto = function() {
+        var end, side, start,
+          _this = this;
+        if (this.curHover.length === 0) {
+          side = function(n) {
+            if (n < 1) {
+              return {
+                x: _this.width * n,
+                y: 0
+              };
+            } else if (n < 2) {
+              return {
+                x: _this.width,
+                y: _this.height * (n - 1)
+              };
+            } else if (n < 3) {
+              return {
+                x: _this.width * (3 - n),
+                y: _this.height
+              };
+            } else {
+              return {
+                x: 0,
+                y: _this.height * (4 - n)
+              };
+            }
+          };
+          start = Math.random() * 4;
+          end = ((Math.random() * 2) + 1 + start) % 4;
+          console.log(start, side(start), end, side(end));
+          start = side(start);
+          end = side(end);
+          this.autoMove = {
+            start: start,
+            end: end,
+            duration: 1000,
+            progress: 0
+          };
+        }
+        return setTimeout(this.auto, Math.random() * 8000 + 5000);
+      };
+
       Boxes.prototype.hover = function(coords) {
-        var c, _i, _j, _len, _len1, _ref;
+        var c, _i, _j, _len, _len1, _ref, _ref1, _ref2, _ref3, _ref4, _ref5, _ref6;
         _ref = this.curHover;
         for (_i = 0, _len = _ref.length; _i < _len; _i++) {
           c = _ref[_i];
-          this.boxes[c[0]][c[1]].setHeight(0);
-          this.boxes[c[0]][c[1]].releaseHeight();
+          if ((_ref1 = this.boxes[c[0]]) != null) {
+            if ((_ref2 = _ref1[c[1]]) != null) {
+              _ref2.setHeight(0);
+            }
+          }
+          if ((_ref3 = this.boxes[c[0]]) != null) {
+            if ((_ref4 = _ref3[c[1]]) != null) {
+              _ref4.releaseHeight();
+            }
+          }
         }
         for (_j = 0, _len1 = coords.length; _j < _len1; _j++) {
           c = coords[_j];
-          this.boxes[c[0]][c[1]].setHeight(1);
+          if ((_ref5 = this.boxes[c[0]]) != null) {
+            if ((_ref6 = _ref5[c[1]]) != null) {
+              _ref6.setHeight(1);
+            }
+          }
         }
         return this.curHover = coords;
       };

@@ -152,6 +152,20 @@ require ["kinetic", "jquery", "underscore"], (Kinetic, $, _) ->
             $(window).on "resize", @reposition
 
             @anim = new Kinetic.Animation ((frame) =>
+                if @autoMove
+                    @autoMove.progress += frame.timeDiff / @autoMove.duration
+                    if @autoMove.progress >= 1
+                        @hover []
+                        @autoMove = null
+                    else
+                        touchX = @autoMove.end.x * @autoMove.progress + @autoMove.start.x * (1 - @autoMove.progress)
+                        touchY = @autoMove.end.y * @autoMove.progress + @autoMove.start.y * (1 - @autoMove.progress)
+
+                        x = Math.floor(@numX * touchX / @width)
+                        y = Math.floor(@numY * touchY / @height)
+
+                        @hover [[x, y]]
+
                 heights = ((@boxes[x][y].height for y in [0...@numY]) for x in [0...@numX])
 
                 for coord in @coords
@@ -161,6 +175,8 @@ require ["kinetic", "jquery", "underscore"], (Kinetic, $, _) ->
             @curHover = []
 
             $(window).on "mousemove mouseover", (e) =>
+                @autoMove = null
+
                 x = Math.floor(@numX * e.clientX / @width)
                 y = Math.floor(@numY * e.clientY / @height)
 
@@ -171,6 +187,7 @@ require ["kinetic", "jquery", "underscore"], (Kinetic, $, _) ->
 
             $(window).on "touchstart touchmove touchend", (e) =>
                 coords = []
+                @autoMove = null
 
                 for touch in e.originalEvent.touches
                     x = Math.floor(@numX * touch.clientX / @width)
@@ -184,13 +201,46 @@ require ["kinetic", "jquery", "underscore"], (Kinetic, $, _) ->
 
             @anim.start()
 
+            setTimeout(@auto, 5000)
+
+        auto: =>
+            if @curHover.length == 0
+                side = (n) =>
+                    if n < 1
+                        x: @width * n
+                        y: 0
+                    else if n < 2
+                        x: @width
+                        y: @height * (n - 1)
+                    else if n < 3
+                        x: @width * (3 - n)
+                        y: @height
+                    else
+                        x: 0
+                        y: @height * (4 - n)
+
+                start = Math.random() * 4
+                end = ((Math.random() * 2) + 1 + start) % 4
+                console.log start, side(start), end, side(end)
+                start = side(start)
+
+                end = side(end)
+
+                @autoMove =
+                    start: start
+                    end: end
+                    duration: 1000
+                    progress: 0
+
+            setTimeout(@auto, Math.random() * 8000 + 5000)
+
         hover: (coords) ->
             for c in @curHover
-                @boxes[c[0]][c[1]].setHeight 0
-                @boxes[c[0]][c[1]].releaseHeight()
+                @boxes[c[0]]?[c[1]]?.setHeight 0
+                @boxes[c[0]]?[c[1]]?.releaseHeight()
 
             for c in coords
-                @boxes[c[0]][c[1]].setHeight 1
+                @boxes[c[0]]?[c[1]]?.setHeight 1
 
             @curHover = coords
 
