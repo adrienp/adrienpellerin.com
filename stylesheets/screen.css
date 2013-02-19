@@ -68,14 +68,30 @@ article, aside, details, figcaption, figure, footer, header, hgroup, menu, nav, 
 }
 
 /* line 8, ../sass/screen.sass */
-html, body {
+html, body, #stage {
   width: 100%;
   height: 100%;
 }
 
 /* line 12, ../sass/screen.sass */
+body {
+  background-color: black;
+}
+
+/* line 15, ../sass/screen.sass */
 #stage {
+  overflow: hidden;
+}
+
+/* line 18, ../sass/screen.sass */
+#title {
+  color: white;
+  position: absolute;
+  top: 50%;
   width: 100%;
-  height: 100%;
-  background-color: #334455;
+  text-align: center;
+  font-family: Lobster, sans-serif;
+  font-size: 3em;
+  margin-top: -0.5em;
+  text-shadow: 0 0 0.3em black;
 }
